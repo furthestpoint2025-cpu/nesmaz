@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>حاسبة العائد على الاستثمار</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<style>
+:root {
+  --primary:       #1a3c5e;
+  --primary-light: #2a5c8e;
+  --accent:        #c8a96e;
+  --accent-light:  #e0c99a;
+  --bg:            #f0ece4;
+  --bg-card:       #faf8f4;
+  --bg-dark:       #0f2137;
+  --text:          #1a2c3e;
+  --text-muted:    #6b7e91;
+  --border:        #d6cfc4;
+  --success:       #2e7d52;
+  --success-bg:    #eaf4ef;
+  --danger:        #b03a2e;
+  --shadow-sm:     0 2px 8px rgba(26,60,94,.08);
+  --shadow-md:     0 6px 24px rgba(26,60,94,.12);
+  --shadow-lg:     0 16px 48px rgba(26,60,94,.18);
+  --radius:        16px;
+  --radius-sm:     10px;
+  --transition:    .3s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Tahoma,'Cairo',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 10% 0%,rgba(200,169,110,.13) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 90% 100%,rgba(26,60,94,.1) 0%,transparent 60%);pointer-events:none;z-index:0}
+
+/* Header */
+header{background:linear-gradient(135deg,var(--bg-dark) 0%,var(--primary) 100%);color:#fff;position:relative;overflow:hidden;box-shadow:var(--shadow-lg)}
+header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:40px;background:var(--bg);clip-path:ellipse(55% 100% at 50% 100%)}
+.header-inner{max-width:1200px;margin:auto;padding:32px 24px 52px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+.header-icon{width:64px;height:64px;background:linear-gradient(135deg,var(--accent) 0%,var(--accent-light) 100%);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 8px 24px rgba(200,169,110,.4);animation:floatIcon 4s ease-in-out infinite}
+@keyframes floatIcon{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+#company-name-display{font-size:clamp(1.4rem,4vw,2rem);font-weight:800;color:var(--accent-light);text-shadow:0 2px 8px rgba(0,0,0,.3);transition:var(--transition)}
+header h1{font-size:clamp(.95rem,3vw,1.25rem);font-weight:400;color:rgba(255,255,255,.8);margin-top:2px}
+
+/* Tabs */
+.tabs-bar{background:rgba(255,255,255,.06);border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:center;gap:4px;padding:8px 16px;flex-wrap:wrap;position:relative;z-index:2}
+.tab-btn{background:transparent;border:1.5px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);padding:8px 20px;border-radius:999px;font-family:inherit;font-size:.85rem;font-weight:600;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:6px}
+.tab-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+.tab-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 4px 16px rgba(200,169,110,.4)}
+
+#admin-trigger{position:absolute;top:14px;left:14px;width:28px;height:28px;background:transparent;border:2px solid rgba(255,255,255,.15);border-radius:8px;cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.25);font-size:14px;z-index:10}
+#admin-trigger:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Pages */
+.page{display:none;flex:1}
+.page.active{display:flex;flex-direction:column}
+.content-wrap{max-width:1200px;margin:0 auto;padding:32px 16px 48px;width:100%;position:relative;z-index:1}
+.cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+
+/* Cards */
+.card{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-md);border:1px solid var(--border);padding:28px;display:flex;flex-direction:column;gap:18px;animation:fadeInUp .55s ease both;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;right:0;width:120px;height:120px;background:radial-gradient(circle,rgba(200,169,110,.09) 0%,transparent 70%);pointer-events:none}
+.card:nth-child(2){animation-delay:.12s}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+.card-title{display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:2px solid var(--border)}
+.card-title-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.card-title-icon.blue{background:rgba(26,60,94,.1);color:var(--primary)}
+.card-title-icon.gold{background:rgba(200,169,110,.18);color:var(--accent)}
+.card-title-icon.green{background:rgba(46,125,82,.1);color:var(--success)}
+.card-title h2{font-size:1.05rem;font-weight:700;color:var(--primary);line-height:1.3}
+.card-title p{font-size:.75rem;color:var(--text-muted);margin-top:2px}
+
+/* Forms */
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:.82rem;font-weight:600;color:var(--primary);display:flex;align-items:center;gap:6px}
+.form-group label .opt{font-size:.7rem;font-weight:400;color:var(--text-muted);background:var(--bg);border:1px solid var(--border);padding:1px 6px;border-radius:20px}
+.input-wrap{position:relative;display:flex;align-items:center}
+.input-wrap .unit{position:absolute;left:12px;font-size:.78rem;color:var(--text-muted);pointer-events:none;background:var(--bg-card);padding:0 3px}
+input[type="number"],input[type="text"],input[type="password"],input[type="date"]{width:100%;padding:10px 14px 10px 52px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:.9rem;font-family:inherit;background:#fff;color:var(--text);transition:var(--transition);direction:ltr;text-align:right}
+input:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(42,92,142,.12)}
+input.no-unit{padding-left:14px;text-align:right;direction:rtl}
+input[type="date"]{direction:ltr;text-align:left;padding-left:44px;padding-right:14px}
+select{width:100%;padding:10px 14px 10px 52px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:.9rem;font-family:inherit;background:#fff;color:var(--text);transition:var(--transition);appearance:none;cursor:pointer;direction:rtl}
+select:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(42,92,142,.12)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 22px;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;transition:var(--transition);position:relative;overflow:hidden}
+.btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);transition:background .2s}
+.btn:hover::after{background:rgba(255,255,255,.12)}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);color:#fff;box-shadow:0 4px 16px rgba(26,60,94,.25)}
+.btn-primary:hover{box-shadow:0 6px 24px rgba(26,60,94,.35);transform:translateY(-1px)}
+.btn-gold{background:linear-gradient(135deg,#b8860b 0%,var(--accent) 100%);color:#fff;box-shadow:0 4px 16px rgba(200,169,110,.35)}
+.btn-gold:hover{box-shadow:0 6px 24px rgba(200,169,110,.5);transform:translateY(-1px)}
+.btn-sm{padding:7px 14px;font-size:.8rem}
+.btn-full{width:100%}
+
+/* Results */
+.results-box{background:linear-gradient(135deg,var(--primary) 0%,var(--bg-dark) 100%);border-radius:var(--radius-sm);padding:20px;display:none;flex-direction:column;gap:12px;animation:resultsPop .4s cubic-bezier(.34,1.56,.64,1) both}
+.results-box.visible{display:flex}
+@keyframes resultsPop{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.results-title{color:var(--accent-light);font-size:.82rem;font-weight:700;letter-spacing:1px;display:flex;align-items:center;gap:6px}
+.results-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.result-item{background:rgba(255,255,255,.07);border-radius:10px;padding:12px 14px;border:1px solid rgba(255,255,255,.1);transition:var(--transition)}
+.result-item:hover{background:rgba(255,255,255,.12)}
+.result-item .label{font-size:.72rem;color:rgba(255,255,255,.55);margin-bottom:5px}
+.result-item .value{font-size:1.1rem;font-weight:800;color:#fff;direction:ltr;text-align:right}
+.result-item .value.highlight{color:var(--accent-light);font-size:1.25rem}
+.result-item .value.profit{color:#4ade80}
+.result-item .value.loss{color:#f87171}
+
+.gold-result{background:linear-gradient(135deg,#7a5c1a 0%,#b8860b 100%);border-radius:var(--radius-sm);padding:18px 20px;display:none;flex-direction:column;gap:10px;animation:resultsPop .4s cubic-bezier(.34,1.56,.64,1) both}
+.gold-result.visible{display:flex}
+.gold-total{color:#fff;font-size:1.4rem;font-weight:800;text-align:center;direction:ltr}
+.gold-label{color:rgba(255,255,255,.7);font-size:.82rem;text-align:center}
+
+/* Gold Status */
+.fetch-status{font-size:.76rem;padding:5px 11px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;font-weight:600}
+.fetch-status.loading{background:rgba(26,60,94,.1);color:var(--primary)}
+.fetch-status.success{background:var(--success-bg);color:var(--success)}
+.fetch-status.error{background:#fdecea;color:var(--danger)}
+.gold-status-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+
+/* Karat table */
+.karat-grid-wrap{display:none}
+.karat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.karat-cell{background:linear-gradient(135deg,rgba(200,169,110,.12),rgba(200,169,110,.04));border:1px solid rgba(200,169,110,.25);border-radius:8px;padding:7px 8px;text-align:center;cursor:pointer;transition:.2s}
+.karat-cell:hover{transform:scale(1.04)}
+.karat-cell.active{box-shadow:0 0 0 2px var(--accent)}
+.karat-cell .kc-name{font-size:.68rem;font-weight:700;color:var(--primary)}
+.karat-cell .kc-price{font-size:.85rem;font-weight:800;color:#8a6800;margin-top:2px}
+.karat-cell .kc-unit{font-size:.62rem;color:var(--text-muted)}
+
+/* Error */
+.error-msg{font-size:.76rem;color:var(--danger);background:#fdecea;padding:6px 12px;border-radius:8px;display:none;align-items:center;gap:6px}
+.error-msg.show{display:flex}
+
+/* ================================================================
+   قسم المقارنة — يظهر أسفل الصفحة تلقائياً
+   ================================================================ */
+.comparison-section{
+  margin-top:36px;
+  display:none;
+  animation:fadeInUp .6s ease both;
+}
+.comparison-section.visible{display:block}
+
+.comparison-wrap{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-md);border:1px solid var(--border);padding:28px}
+.comparison-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-bottom:16px;border-bottom:2px solid var(--border);margin-bottom:24px}
+.comparison-header h2{font-size:1.05rem;font-weight:700;color:var(--primary)}
+.comparison-header p{font-size:.75rem;color:var(--text-muted);margin-top:2px}
+
+/* بادج "بيانات ناقصة" */
+.cmp-notice{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(200,169,110,.1);border:1px solid rgba(200,169,110,.3);
+  border-radius:10px;padding:12px 16px;
+  font-size:.82rem;color:#8a6800;
+}
+.cmp-notice .ni{font-size:18px}
+
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px}
+.chart-block h3{font-size:.8rem;font-weight:700;color:var(--primary);text-align:center;margin-bottom:10px}
+.chart-box{position:relative;height:260px}
+.summary-row{display:flex;gap:10px;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--border);justify-content:center}
+.summary-chip{display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:999px;font-size:.8rem;font-weight:700}
+.chip-gold{background:rgba(200,169,110,.14);color:#8a6800;border:1px solid rgba(200,169,110,.35)}
+.chip-real{background:rgba(26,60,94,.08);color:var(--primary);border:1px solid rgba(26,60,94,.2)}
+.chip-winner{background:var(--success-bg);color:var(--success);border:1px solid rgba(46,125,82,.3)}
+.chip-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* Help */
+.help-content{max-width:860px;margin:0 auto}
+.help-section{background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow-sm);padding:24px 28px;margin-bottom:20px;animation:fadeInUp .5s ease both}
+.help-section:nth-child(2){animation-delay:.08s}
+.help-section:nth-child(3){animation-delay:.16s}
+.help-section:nth-child(4){animation-delay:.24s}
+.help-section-title{display:flex;align-items:center;gap:10px;font-size:1rem;font-weight:800;color:var(--primary);margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--border)}
+.help-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.help-icon.gold{background:rgba(200,169,110,.18)}
+.help-icon.blue{background:rgba(26,60,94,.1)}
+.help-icon.green{background:rgba(46,125,82,.1)}
+.help-steps{display:flex;flex-direction:column;gap:10px}
+.help-step{display:flex;gap:12px;align-items:flex-start}
+.step-num{width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;font-size:.75rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-num.gold-bg{background:#8a6800}
+.step-text{font-size:.85rem;line-height:1.65;color:var(--text)}
+.formula-box{background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:14px 18px;margin:12px 0;direction:ltr;text-align:center;font-size:.9rem;font-weight:700;color:var(--primary);font-family:'Courier New',monospace}
+.example-box{background:linear-gradient(135deg,rgba(26,60,94,.04) 0%,rgba(200,169,110,.06) 100%);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-top:14px}
+.example-box .ex-title{font-size:.78rem;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.example-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px dashed var(--border);font-size:.84rem}
+.example-row:last-child{border-bottom:none;font-weight:800;color:var(--success)}
+.example-row .er-val{direction:ltr;font-weight:600}
+.definition-box{background:linear-gradient(135deg,var(--primary) 0%,var(--bg-dark) 100%);border-radius:10px;padding:16px 20px;color:#fff;font-size:.85rem;line-height:1.8}
+.definition-box strong{color:var(--accent-light)}
+
+/* Modals */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(10,20,35,.75);backdrop-filter:blur(6px);z-index:8000;align-items:center;justify-content:center;padding:16px}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--bg-card);border-radius:var(--radius);box-shadow:var(--shadow-lg);width:100%;max-width:480px;padding:30px 26px;animation:modalIn .35s cubic-bezier(.34,1.2,.64,1) both;border:1px solid var(--border);position:relative}
+@keyframes modalIn{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-close{position:absolute;top:14px;left:14px;width:30px;height:30px;background:var(--bg);border:1px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--text-muted);transition:var(--transition)}
+.modal-close:hover{background:#fdecea;color:var(--danger);border-color:var(--danger)}
+.modal-header{display:flex;align-items:center;gap:12px;margin-bottom:22px;padding-bottom:14px;border-bottom:2px solid var(--border)}
+.modal-header .icon{width:42px;height:42px;background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;color:#fff}
+.modal-header h3{font-size:1rem;color:var(--primary);font-weight:700}
+.modal-header p{font-size:.75rem;color:var(--text-muted);margin-top:2px}
+.modal-section{display:flex;flex-direction:column;gap:13px;margin-bottom:18px}
+.section-label{font-size:.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:6px}
+.save-msg{font-size:.8rem;font-weight:600;color:var(--success);padding:7px 13px;background:var(--success-bg);border-radius:8px;display:none;align-items:center;gap:6px}
+.save-msg.show{display:flex}
+.divider{display:flex;align-items:center;gap:10px;color:var(--text-muted);font-size:.72rem}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* زر المشاركة */
+.share-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 16px; border-radius: 999px;
+  font-size: .8rem; font-weight: 700; cursor: pointer;
+  border: 1.5px solid rgba(255,255,255,.25);
+  background: rgba(255,255,255,.1); color: #fff;
+  transition: var(--transition); margin-top: 6px;
+}
+.share-btn:hover { background: rgba(255,255,255,.2); border-color: var(--accent); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--bg-dark); color: #fff;
+  padding: 12px 22px; border-radius: 999px;
+  font-size: .85rem; font-weight: 600;
+  box-shadow: var(--shadow-lg); z-index: 9999;
+  display: flex; align-items: center; gap: 8px;
+  transition: transform .4s cubic-bezier(.34,1.56,.64,1), opacity .4s;
+  opacity: 0; pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* Expiry overlay */
+.disabled-overlay{display:none;position:fixed;inset:0;background:rgba(15,33,55,.93);z-index:9000;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;padding:24px}
+.disabled-overlay.active{display:flex}
+.disabled-overlay .lock-icon{font-size:60px;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.95)}}
+.disabled-overlay h2{color:var(--accent-light);font-size:1.5rem}
+.disabled-overlay p{color:rgba(255,255,255,.7);font-size:.95rem;line-height:1.8}
+
+footer{background:var(--bg-dark);color:rgba(255,255,255,.5);text-align:center;padding:16px;font-size:.8rem;line-height:1.7;position:relative;z-index:1}
+footer strong{color:var(--accent-light)}
+
+@media(max-width:768px){
+  .cards-grid{grid-template-columns:1fr}
+  .charts-row{grid-template-columns:1fr}
+  .results-grid{grid-template-columns:1fr}
+  .card{padding:20px 16px}
+  .help-section{padding:18px 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <button id="admin-trigger" onclick="openAdminLogin()" title="لوحة التحكم">⚙</button>
+  <div class="header-inner">
+    <div class="header-icon">💼</div>
+    <div id="company-name-display">شركة الاستثمار</div>
+    <h1>🏦 حاسبة العائد على الاستثمار</h1>
+  </div>
+  <div class="tabs-bar">
+    <button class="tab-btn active" onclick="showPage('page-gold',this)">🥇 الذهب</button>
+    <button class="tab-btn"       onclick="showPage('page-real',this)">🏢 العقار</button>
+    <button class="tab-btn"       onclick="showPage('page-help',this)">❓ المساعدة</button>
+  </div>
+</header>
+
+
+<!-- ================================================================
+     PAGE 1: الذهب
+     ================================================================ -->
+<div class="page active" id="page-gold">
+<div class="content-wrap">
+<div class="cards-grid">
+
+  <!-- بطاقة القيمة الحالية -->
+  <div class="card">
+    <div class="card-title">
+      <div class="card-title-icon gold">🥇</div>
+      <div><h2>حاسبة الاستثمار في الذهب</h2><p>أسعار لحظية — gold-api.com</p></div>
+    </div>
+    <div class="gold-status-bar">
+      <span id="gold-fetch-status" class="fetch-status"></span>
+      <button class="btn btn-gold btn-sm" onclick="fetchGoldPrice()" id="refresh-btn">🔄 تحديث السعر</button>
+    </div>
+    <div class="karat-grid-wrap" id="karat-table">
+      <div style="font-size:.75rem;font-weight:700;color:var(--primary);margin-bottom:7px;">💰 أسعار الجرام بالجنيه المصري</div>
+      <div class="karat-grid" id="karat-grid"></div>
+      <div style="font-size:.67rem;color:var(--text-muted);margin-top:5px;direction:ltr;">gold-api.com | <span id="price-timestamp"></span></div>
+    </div>
+    <div class="form-group">
+      <label>✨ العيار</label>
+      <div class="input-wrap">
+        <span class="unit">K</span>
+        <select id="g-karat" onchange="onKaratChange()">
+          <option value="24">عيار 24 — ذهب خالص 99.9%</option>
+          <option value="22" selected>عيار 22 — مجوهرات راقية</option>
+          <option value="21">عيار 21 — الأكثر شيوعاً في مصر</option>
+          <option value="18">عيار 18 — مجوهرات أوروبية</option>
+          <option value="14">عيار 14 — مجوهرات خفيفة</option>
+          <option value="10">عيار 10 — الأقل عياراً</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>💛 سعر الجرام الحالي</label>
+      <div class="input-wrap"><span class="unit">ج.م</span>
+        <input type="number" id="g-price" placeholder="جارٍ الجلب..." min="0" step="any">
+      </div>
+    </div>
+    <div id="usd-ref" style="display:none;font-size:.72rem;color:var(--text-muted);background:var(--bg);padding:5px 11px;border-radius:8px;direction:ltr;"></div>
+    <div class="form-group">
+      <label>⚖️ عدد الجرامات</label>
+      <div class="input-wrap"><span class="unit">جم</span>
+        <input type="number" id="g-grams" placeholder="0" min="0" step="any">
+      </div>
+    </div>
+    <div id="g-error" class="error-msg">⚠️ أدخل السعر وعدد الجرامات</div>
+    <button class="btn btn-primary btn-full" onclick="calcGoldLive()">🧮 احسب القيمة الحالية</button>
+    <div class="gold-result" id="glive-results">
+      <div class="gold-label" id="glive-karat-label">إجمالي قيمة الاستثمار</div>
+      <div class="gold-total" id="glive-total">—</div>
+      <div class="gold-label" id="glive-breakdown">—</div>
+    </div>
+  </div>
+
+  <!-- بطاقة العائد شراء/بيع -->
+  <div class="card">
+    <div class="card-title">
+      <div class="card-title-icon gold">📈</div>
+      <div><h2>العائد على الذهب — شراء وبيع</h2><p>احسب ربحك ومعدل عائدك</p></div>
+    </div>
+    <div class="form-group">
+      <label>💵 سعر شراء الجرام</label>
+      <div class="input-wrap"><span class="unit">ج.م</span>
+        <input type="number" id="gr-buy" placeholder="0.00" min="0" step="any">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>🎯 سعر البيع المتوقع للجرام</label>
+      <div class="input-wrap"><span class="unit">ج.م</span>
+        <input type="number" id="gr-sell" placeholder="0.00" min="0" step="any">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>⚖️ الكمية بالجرام</label>
+      <div class="input-wrap"><span class="unit">جم</span>
+        <input type="number" id="gr-grams" placeholder="0" min="0" step="any">
+      </div>
+    </div>
+    <div id="gr-error" class="error-msg">⚠️ أدخل سعر الشراء والبيع والكمية</div>
+    <button class="btn btn-gold btn-full" onclick="calcGoldROI()">🧮 احسب العائد على الذهب</button>
+    <div class="results-box" id="gr-results">
+      <div class="results-title">📊 نتائج العائد على الذهب</div>
+      <div class="results-grid">
+        <div class="result-item"><div class="label">💰 إجمالي تكلفة الشراء</div><div class="value" id="gr-total-cost">—</div></div>
+        <div class="result-item"><div class="label">💎 إجمالي قيمة البيع</div><div class="value" id="gr-total-sell">—</div></div>
+        <div class="result-item"><div class="label">📈 الربح / الخسارة</div><div class="value" id="gr-profit">—</div></div>
+        <div class="result-item"><div class="label">🏆 معدل العائد ROI</div><div class="value highlight" id="gr-roi">—</div></div>
+      </div>
+      <div style="font-size:.68rem;color:rgba(255,255,255,.4);text-align:center;margin-top:4px;">المعادلة: (سعر البيع − سعر الشراء) ÷ سعر الشراء × 100</div>
+      <button class="share-btn" onclick="shareGoldROI()">📤 مشاركة النتائج</button>
+    </div>
+  </div>
+
+</div><!-- /cards-grid -->
+
+<!-- ===== قسم المقارنة يظهر تلقائياً هنا ===== -->
+<div class="comparison-section" id="gold-comparison">
+  <div class="comparison-wrap">
+    <div class="comparison-header">
+      <div>
+        <h2>📊 مقارنة تلقائية: الذهب مقابل العقار</h2>
+        <p>أدخل بيانات العقار في تبويب العقار لتفعيل المقارنة الكاملة</p>
+      </div>
+    </div>
+    <div id="gold-cmp-notice" class="cmp-notice">
+      <span class="ni">🏢</span>
+      <span>لم يتم حساب العقار بعد — انتقل إلى تبويب <strong>العقار</strong> وأدخل البيانات لتظهر المقارنة هنا تلقائياً.</span>
+    </div>
+    <div id="gold-cmp-charts" style="display:none;">
+      <div class="charts-row">
+        <div class="chart-block"><h3>📊 معدل العائد % (ROI)</h3><div class="chart-box"><canvas id="gc-chart-bar"></canvas></div></div>
+        <div class="chart-block"><h3>💰 إجمالي الربح (ج.م)</h3><div class="chart-box"><canvas id="gc-chart-profit"></canvas></div></div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-chip chip-gold"><span class="chip-dot" style="background:#c8a96e;"></span>عائد الذهب: <span id="gc-badge-gold" style="margin-right:4px;">—</span></div>
+        <div class="summary-chip chip-real"><span class="chip-dot" style="background:#1a3c5e;"></span>عائد العقار: <span id="gc-badge-real" style="margin-right:4px;">—</span></div>
+        <div class="summary-chip chip-winner" id="gc-badge-winner"><span id="gc-winner-text">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content-wrap -->
+</div><!-- /page-gold -->
+
+
+<!-- ================================================================
+     PAGE 2: العقار
+     ================================================================ -->
+<div class="page" id="page-real">
+<div class="content-wrap">
+<div class="cards-grid">
+
+  <!-- إيجار -->
+  <div class="card">
+    <div class="card-title">
+      <div class="card-title-icon blue">🏢</div>
+      <div><h2>العائد على الإيجار السنوي</h2><p>احسب عائدك من الإيجار ومدة الاسترداد</p></div>
+    </div>
+    <div class="form-group">
+      <label>💰 سعر شراء الوحدة</label>
+      <div class="input-wrap"><span class="unit">ج.م</span>
+        <input type="number" id="c-price" placeholder="0.00" min="0" step="any">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>📅 الإيجار الشهري</label>
+      <div class="input-wrap"><span class="unit">ج.م</span>
+        <input type="number" id="c-rent" placeholder="0.00" min="0" step="any">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>📋 المصروفات السنوية <span class="opt">اختياري</span></label>
+      <div class="input-wrap"><span class="unit">ج.م</span>
+        <input type="number" id="c-expenses" placeholder="0.00" min="0" step="any">
+      </div>
+    </div>
+    <div id="c-error" class="error-msg">⚠️ أدخل سعر الشراء والإيجار الشهري</div>
+    <button class="btn btn-primary btn-full" onclick="calcCommercial()">🧮 احسب العائد من الإيجار</button>
+    <div class="results-box" id="c-results">
+      <div class="results-title">📊 نتائج التحليل المالي</div>
+      <div class="results-grid">
+        <div class="result-item"><div class="label">🗓️ الدخل السنوي الإجمالي</div><div class="value" id="r-annual-income">—</div></div>
+        <div class="result-item"><div class="label">✅ صافي الدخل السنوي</div><div class="value" id="r-net-income">—</div></div>
+        <div class="result-item"><div class="label">📉 معدل العائد السنوي ROI</div><div class="value highlight" id="r-roi">—</div></div>
+        <div class="result-item"><div class="label">⏳ مدة استرداد رأس المال</div><div class="value highlight" id="r-payback">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- بيع عقاري -->
+  <div class="card">
+    <div class="card-title">
+      <div class="card-title-icon blue">🏗️</div>
+      <div><h2>العائد على البيع العقاري</h2><p>قارن سعر الشراء بسعر البيع المتوقع</p></div>
+    </div>
+    <div class="form-group">
+      <label>🏠 سعر شراء الوحدة</label>
+      <div class="input-wrap"><span class="unit">ج.م</span>
+        <input type="number" id="re-buy" placeholder="0.00" min="0" step="any">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>🔧 المصاريف الإضافية <span class="opt">تشطيب، رسوم</span></label>
+      <div class="input-wrap"><span class="unit">ج.م</span>
+        <input type="number" id="re-extras" placeholder="0.00" min="0" step="any">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>🎯 سعر البيع المتوقع</label>
+      <div class="input-wrap"><span class="unit">ج.م</span>
+        <input type="number" id="re-sell" placeholder="0.00" min="0" step="any">
+      </div>
+    </div>
+    <div id="re-error" class="error-msg">⚠️ أدخل سعر الشراء وسعر البيع</div>
+    <button class="btn btn-primary btn-full" onclick="calcRealEstate()">🧮 احسب العائد على البيع</button>
+    <div class="results-box" id="re-results">
+      <div class="results-title">📊 نتائج العائد العقاري</div>
+      <div class="results-grid">
+        <div class="result-item"><div class="label">💰 إجمالي التكلفة</div><div class="value" id="re-total-cost">—</div></div>
+        <div class="result-item"><div class="label">💎 قيمة البيع المتوقعة</div><div class="value" id="re-total-sell">—</div></div>
+        <div class="result-item"><div class="label">📈 الربح المتوقع</div><div class="value" id="re-profit">—</div></div>
+        <div class="result-item"><div class="label">🏆 معدل العائد ROI</div><div class="value highlight" id="re-roi">—</div></div>
+      </div>
+      <div style="font-size:.68rem;color:rgba(255,255,255,.4);text-align:center;margin-top:4px;">المعادلة: (قيمة البيع − إجمالي التكلفة) ÷ إجمالي التكلفة × 100</div>
+      <button class="share-btn" onclick="shareRealEstate()">📤 مشاركة النتائج</button>
+    </div>
+  </div>
+
+</div><!-- /cards-grid -->
+
+<!-- ===== قسم المقارنة يظهر تلقائياً هنا ===== -->
+<div class="comparison-section" id="real-comparison">
+  <div class="comparison-wrap">
+    <div class="comparison-header">
+      <div>
+        <h2>📊 مقارنة تلقائية: العقار مقابل الذهب</h2>
+        <p>أدخل بيانات الذهب في تبويب الذهب لتفعيل المقارنة الكاملة</p>
+      </div>
+    </div>
+    <div id="real-cmp-notice" class="cmp-notice">
+      <span class="ni">🥇</span>
+      <span>لم يتم حساب الذهب بعد — انتقل إلى تبويب <strong>الذهب</strong> وأدخل البيانات لتظهر المقارنة هنا تلقائياً.</span>
+    </div>
+    <div id="real-cmp-charts" style="display:none;">
+      <div class="charts-row">
+        <div class="chart-block"><h3>📊 معدل العائد % (ROI)</h3><div class="chart-box"><canvas id="rc-chart-bar"></canvas></div></div>
+        <div class="chart-block"><h3>💰 إجمالي الربح (ج.م)</h3><div class="chart-box"><canvas id="rc-chart-profit"></canvas></div></div>
+      </div>
+      <div class="summary-row">
+        <div class="summary-chip chip-gold"><span class="chip-dot" style="background:#c8a96e;"></span>عائد الذهب: <span id="rc-badge-gold" style="margin-right:4px;">—</span></div>
+        <div class="summary-chip chip-real"><span class="chip-dot" style="background:#1a3c5e;"></span>عائد العقار: <span id="rc-badge-real" style="margin-right:4px;">—</span></div>
+        <div class="summary-chip chip-winner" id="rc-badge-winner"><span id="rc-winner-text">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content-wrap -->
+</div><!-- /page-real -->
+
+
+<!-- ================================================================
+     PAGE 3: المساعدة
+     ================================================================ -->
+<div class="page" id="page-help">
+<div class="content-wrap">
+<div class="help-content">
+  <div class="help-section">
+    <div class="help-section-title"><div class="help-icon green">💡</div>ما هو معدل العائد على الاستثمار ROI؟</div>
+    <div class="definition-box"><strong>معدل العائد على الاستثمار (ROI)</strong> مقياس مالي يقيس كفاءة الاستثمار بمقارنة الربح بالتكلفة الأصلية.<br><br><strong>المعادلة:</strong> ROI = (الربح ÷ تكلفة الاستثمار) × 100</div>
+  </div>
+  <div class="help-section">
+    <div class="help-section-title"><div class="help-icon gold">🥇</div>طريقة حساب العائد على الذهب</div>
+    <div class="formula-box">ROI الذهب = (سعر البيع − سعر الشراء) ÷ سعر الشراء × 100</div>
+    <div class="example-box">
+      <div class="ex-title">📌 مثال عملي</div>
+      <div class="example-row"><span>سعر شراء الجرام</span><span class="er-val">5,000 ج.م</span></div>
+      <div class="example-row"><span>سعر البيع المتوقع</span><span class="er-val">6,500 ج.م</span></div>
+      <div class="example-row"><span>الكمية</span><span class="er-val">50 جم</span></div>
+      <div class="example-row"><span>معدل العائد ROI</span><span class="er-val" style="color:var(--success);">+30%</span></div>
+    </div>
+  </div>
+  <div class="help-section">
+    <div class="help-section-title"><div class="help-icon blue">🏢</div>طريقة حساب العائد على العقار</div>
+    <div class="formula-box">ROI العقار = (قيمة البيع − إجمالي التكلفة) ÷ إجمالي التكلفة × 100</div>
+    <div class="example-box">
+      <div class="ex-title">📌 مثال عملي</div>
+      <div class="example-row"><span>سعر الشراء + مصاريف</span><span class="er-val">2,200,000 ج.م</span></div>
+      <div class="example-row"><span>سعر البيع المتوقع</span><span class="er-val">3,000,000 ج.م</span></div>
+      <div class="example-row"><span>معدل العائد ROI</span><span class="er-val" style="color:var(--success);">+36.4%</span></div>
+    </div>
+  </div>
+  <div class="help-section">
+    <div class="help-section-title"><div class="help-icon green">📌</div>كيف تعمل المقارنة التلقائية؟</div>
+    <div class="help-steps">
+      <div class="help-step"><div class="step-num">1</div><div class="step-text">احسب العائد على الذهب في تبويب <strong>الذهب</strong>.</div></div>
+      <div class="help-step"><div class="step-num">2</div><div class="step-text">احسب العائد على العقار في تبويب <strong>العقار</strong>.</div></div>
+      <div class="help-step"><div class="step-num">3</div><div class="step-text">تظهر المقارنة <strong>تلقائياً</strong> أسفل كل تبويب بمجرد إتمام الحسابَين، دون الحاجة لتبويب منفصل.</div></div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+
+<!-- Toast -->
+<div class="toast" id="toast">✅ تم نسخ الرسالة!</div>
+
+<!-- FOOTER -->
+<footer>
+  <strong>الابتكار والتطوير</strong><br>
+  محمد عبد المنعم الأدعش &nbsp;|&nbsp; 📞 01028265854
+</footer>
+
+
+<!-- Modal: تسجيل دخول -->
+<div class="modal-backdrop" id="login-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('login-modal')">✕</button>
+    <div class="modal-header"><div class="icon">🔐</div><div><h3>لوحة التحكم</h3><p>أدخل كلمة المرور</p></div></div>
+    <div class="modal-section">
+      <div class="form-group">
+        <label>🔑 كلمة المرور</label>
+        <div class="input-wrap"><span class="unit">🔒</span>
+          <input type="password" id="admin-pass" class="no-unit" style="padding-right:14px;direction:ltr;text-align:left;" placeholder="••••••••" onkeydown="if(event.key==='Enter')verifyPassword()">
+        </div>
+      </div>
+      <div id="pass-error" class="error-msg">❌ كلمة المرور غير صحيحة</div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="verifyPassword()">🚀 دخول</button>
+  </div>
+</div>
+
+<!-- Modal: لوحة التحكم -->
+<div class="modal-backdrop" id="admin-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('admin-modal')">✕</button>
+    <div class="modal-header"><div class="icon">⚙️</div><div><h3>لوحة التحكم</h3><p>إدارة إعدادات البرنامج</p></div></div>
+    <div class="modal-section">
+      <div class="section-label">🏢 اسم الشركة</div>
+      <div class="form-group">
+        <div class="input-wrap"><span class="unit">🏷️</span>
+          <input type="text" id="adm-company" class="no-unit" style="padding-right:14px;direction:rtl;" placeholder="أدخل اسم الشركة">
+        </div>
+      </div>
+    </div>
+    <div class="divider">إعدادات الصلاحية</div><br>
+    <div class="modal-section">
+      <div class="section-label">📅 تاريخ انتهاء الصلاحية</div>
+      <div class="form-group">
+        <div class="input-wrap"><span class="unit">📆</span>
+          <input type="date" id="adm-expiry" style="padding-left:44px;padding-right:14px;direction:ltr;text-align:left;">
+        </div>
+      </div>
+    </div>
+    <div id="adm-save-msg" class="save-msg">✅ تم حفظ الإعدادات</div>
+    <button class="btn btn-primary btn-full" onclick="saveAdminSettings()">💾 حفظ الإعدادات</button>
+  </div>
+</div>
+
+<!-- Overlay انتهاء الصلاحية -->
+<div class="disabled-overlay" id="expired-overlay">
+  <div class="lock-icon">🔒</div>
+  <h2>انتهت صلاحية البرنامج</h2>
+  <p>يرجى التواصل مع المطور لتجديد الاشتراك<br><strong style="color:var(--accent-light);">محمد عبد المنعم الأدعش</strong><br>📞 01028265854</p>
+</div>
+
+
+<script>
+/* ================================================================
+   إعدادات
+   ================================================================ */
+const ADMIN_PASSWORD = "admin2025";
+
+/* ================================================================
+   حالة عالمية — نتائج الحسابَين
+   ================================================================ */
+const state = {
+  gold:  { roi: null, profit: null },   // من calcGoldROI
+  real:  { roi: null, profit: null },   // من calcRealEstate أو calcCommercial
+};
+
+let goldPrice24KperGram_EGP = 0;
+const KARAT_RATIOS = { 24:1, 22:22/24, 21:21/24, 18:18/24, 14:14/24, 10:10/24 };
+const KARAT_NAMES  = { 24:"عيار 24", 22:"عيار 22", 21:"عيار 21", 18:"عيار 18", 14:"عيار 14", 10:"عيار 10" };
+
+/* chart instances */
+let gcBar=null, gcProfit=null, rcBar=null, rcProfit=null;
+
+/* ================================================================
+   Init
+   ================================================================ */
+document.addEventListener("DOMContentLoaded", () => {
+  loadSettings();
+  checkExpiry();
+  fetchGoldPrice();
+});
+
+/* ================================================================
+   التبويبات
+   ================================================================ */
+function showPage(pageId, btn) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById(pageId).classList.add("active");
+  btn.classList.add("active");
+}
+
+/* ================================================================
+   LocalStorage
+   ================================================================ */
+function loadSettings() {
+  const company = localStorage.getItem("inv_company") || "شركة الاستثمار";
+  const expiry  = localStorage.getItem("inv_expiry")  || "";
+  document.getElementById("company-name-display").textContent = company;
+  document.getElementById("adm-company").value = company;
+  if (expiry) document.getElementById("adm-expiry").value = expiry;
+}
+function saveAdminSettings() {
+  const company = document.getElementById("adm-company").value.trim() || "شركة الاستثمار";
+  const expiry  = document.getElementById("adm-expiry").value;
+  localStorage.setItem("inv_company", company);
+  expiry ? localStorage.setItem("inv_expiry", expiry) : localStorage.removeItem("inv_expiry");
+  document.getElementById("company-name-display").textContent = company;
+  const msg = document.getElementById("adm-save-msg");
+  msg.classList.add("show");
+  setTimeout(() => msg.classList.remove("show"), 3000);
+  checkExpiry();
+}
+
+/* ================================================================
+   الصلاحية
+   ================================================================ */
+function checkExpiry() {
+  const expiry = localStorage.getItem("inv_expiry");
+  if (!expiry) { enableApp(); return; }
+  const ed = new Date(expiry), td = new Date();
+  td.setHours(0,0,0,0); ed.setHours(0,0,0,0);
+  td > ed ? disableApp() : enableApp();
+}
+function disableApp() { document.getElementById("expired-overlay").classList.add("active"); }
+function enableApp()  { document.getElementById("expired-overlay").classList.remove("active"); }
+
+/* ================================================================
+   Admin
+   ================================================================ */
+function openAdminLogin() {
+  document.getElementById("admin-pass").value = "";
+  document.getElementById("pass-error").classList.remove("show");
+  document.getElementById("login-modal").classList.add("open");
+  setTimeout(() => document.getElementById("admin-pass").focus(), 100);
+}
+function verifyPassword() {
+  if (document.getElementById("admin-pass").value === ADMIN_PASSWORD) {
+    closeModal("login-modal");
+    loadSettings();
+    document.getElementById("admin-modal").classList.add("open");
+  } else {
+    document.getElementById("pass-error").classList.add("show");
+    document.getElementById("admin-pass").value = "";
+  }
+}
+function closeModal(id) { document.getElementById(id).classList.remove("open"); }
+document.addEventListener("keydown", e => {
+  if (e.shiftKey && e.key === "A") openAdminLogin();
+  if (e.key === "Escape") { closeModal("login-modal"); closeModal("admin-modal"); }
+});
+
+/* ================================================================
+   Gold API
+   ================================================================ */
+function fetchWithTimeout(url, ms) {
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(tid));
+}
+async function fetchGoldPrice() {
+  const statusEl = document.getElementById("gold-fetch-status");
+  const btn      = document.getElementById("refresh-btn");
+  statusEl.className = "fetch-status loading";
+  statusEl.innerHTML = '<span class="spinner"></span> جارٍ جلب السعر...';
+  btn.disabled = true;
+  document.getElementById("karat-table").style.display = "none";
+  document.getElementById("usd-ref").style.display = "none";
+  try {
+    const res = await fetchWithTimeout("https://api.gold-api.com/price/XAU", 8000);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    if (!data.price || data.price <= 0) throw new Error();
+    let egpRate = 50.5;
+    try {
+      const fx = await fetchWithTimeout("https://api.exchangerate-api.com/v4/latest/USD", 6000);
+      if (fx.ok) { const d = await fx.json(); egpRate = d.rates?.EGP || egpRate; }
+    } catch(_) {}
+    goldPrice24KperGram_EGP = (data.price / 31.1035) * egpRate;
+    updatePriceByKarat();
+    renderKaratTable(goldPrice24KperGram_EGP);
+    const ref = document.getElementById("usd-ref");
+    ref.style.display = "block";
+    ref.textContent = `XAU/USD: $${data.price.toLocaleString("en-US",{maximumFractionDigits:2})} /oz  |  USD/EGP: ${egpRate.toFixed(2)}`;
+    document.getElementById("price-timestamp").textContent = "آخر تحديث: " + new Date().toLocaleTimeString("ar-EG");
+    statusEl.className = "fetch-status success";
+    statusEl.innerHTML = "✅ تم التحديث من gold-api.com";
+  } catch(e) {
+    statusEl.className = "fetch-status error";
+    statusEl.innerHTML = "❌ تعذر جلب السعر — أدخله يدوياً";
+  } finally { btn.disabled = false; }
+}
+function onKaratChange() { if (goldPrice24KperGram_EGP > 0) updatePriceByKarat(); }
+function updatePriceByKarat() {
+  const k = parseInt(document.getElementById("g-karat").value);
+  document.getElementById("g-price").value = (goldPrice24KperGram_EGP * (KARAT_RATIOS[k] ?? 1)).toFixed(2);
+}
+function renderKaratTable(p24) {
+  const grid = document.getElementById("karat-grid");
+  grid.innerHTML = "";
+  const fmt = n => n.toLocaleString("ar-EG", { maximumFractionDigits: 0 });
+  Object.entries(KARAT_RATIOS).forEach(([k, r]) => {
+    const cell = document.createElement("div");
+    cell.className = "karat-cell";
+    cell.innerHTML = `<div class="kc-name">${KARAT_NAMES[k]}</div><div class="kc-price">${fmt(p24*r)}</div><div class="kc-unit">ج.م/جم</div>`;
+    cell.onclick = () => {
+      document.getElementById("g-karat").value = k;
+      updatePriceByKarat();
+      grid.querySelectorAll(".karat-cell").forEach(c => c.classList.remove("active"));
+      cell.classList.add("active");
+    };
+    grid.appendChild(cell);
+  });
+  document.getElementById("karat-table").style.display = "block";
+}
+
+/* ================================================================
+   حاسبة الذهب — القيمة الحالية
+   ================================================================ */
+function calcGoldLive() {
+  const price = parseFloat(document.getElementById("g-price").value) || 0;
+  const grams = parseFloat(document.getElementById("g-grams").value) || 0;
+  const errEl = document.getElementById("g-error");
+  if (!price || !grams) { errEl.classList.add("show"); return; }
+  errEl.classList.remove("show");
+  const karat = parseInt(document.getElementById("g-karat").value);
+  const fmt   = n => n.toLocaleString("ar-EG", { minimumFractionDigits:2, maximumFractionDigits:2 });
+  document.getElementById("glive-karat-label").textContent = "القيمة الحالية — " + (KARAT_NAMES[karat] ?? "");
+  document.getElementById("glive-total").textContent = fmt(price * grams) + " ج.م";
+  document.getElementById("glive-breakdown").textContent = grams.toLocaleString("ar-EG") + " جم × " + fmt(price) + " ج.م/جم";
+  animateResult("glive-results");
+}
+
+/* ================================================================
+   حاسبة عائد الذهب (شراء/بيع) — يُحدِّث state ويُشغِّل المقارنة
+   ================================================================ */
+function calcGoldROI() {
+  const buyPg = parseFloat(document.getElementById("gr-buy").value)   || 0;
+  const sellPg= parseFloat(document.getElementById("gr-sell").value)  || 0;
+  const grams = parseFloat(document.getElementById("gr-grams").value) || 0;
+  const errEl = document.getElementById("gr-error");
+  if (!buyPg || !sellPg || !grams) { errEl.classList.add("show"); return; }
+  errEl.classList.remove("show");
+
+  const totalCost = buyPg  * grams;
+  const totalSell = sellPg * grams;
+  const profit    = totalSell - totalCost;
+  const roi       = buyPg > 0 ? ((sellPg - buyPg) / buyPg) * 100 : 0;
+  const isPos     = profit >= 0;
+  const fmt = n => n.toLocaleString("ar-EG", { minimumFractionDigits:2, maximumFractionDigits:2 });
+
+  document.getElementById("gr-total-cost").textContent = fmt(totalCost) + " ج.م";
+  document.getElementById("gr-total-sell").textContent = fmt(totalSell) + " ج.م";
+  document.getElementById("gr-profit").textContent = (isPos ? "▲ +" : "▼ ") + fmt(Math.abs(profit)) + " ج.م";
+  document.getElementById("gr-profit").className = "value " + (isPos ? "profit" : "loss");
+  document.getElementById("gr-roi").textContent = (isPos ? "+" : "") + roi.toFixed(2) + " %";
+  document.getElementById("gr-roi").style.color = isPos ? "#4ade80" : "#f87171";
+  animateResult("gr-results");
+
+  /* حفظ في الحالة */
+  state.gold = { roi, profit };
+
+  /* إظهار قسم المقارنة في تبويب الذهب */
+  showComparisonSection("gold");
+}
+
+/* ================================================================
+   حاسبة الإيجار — تحديث state.real (roi) ثم مقارنة
+   ================================================================ */
+function calcCommercial() {
+  const price    = parseFloat(document.getElementById("c-price").value)    || 0;
+  const rent     = parseFloat(document.getElementById("c-rent").value)     || 0;
+  const expenses = parseFloat(document.getElementById("c-expenses").value) || 0;
+  const errEl    = document.getElementById("c-error");
+  if (!price || !rent) { errEl.classList.add("show"); return; }
+  errEl.classList.remove("show");
+
+  const annualIncome = rent * 12;
+  const netIncome    = annualIncome - expenses;
+  const roi          = price > 0 ? (netIncome / price) * 100 : 0;
+  const payback      = netIncome > 0 ? price / netIncome : Infinity;
+  const fmt = n => n.toLocaleString("ar-EG", { maximumFractionDigits:2 });
+
+  document.getElementById("r-annual-income").textContent = fmt(annualIncome) + " ج.م";
+  document.getElementById("r-net-income").textContent    = fmt(netIncome)    + " ج.م";
+  document.getElementById("r-roi").textContent           = roi.toFixed(2)    + " %";
+  if (payback === Infinity || netIncome <= 0) {
+    document.getElementById("r-payback").textContent = "غير محدد";
+  } else {
+    const y = Math.floor(payback), m = Math.round((payback - y) * 12);
+    document.getElementById("r-payback").textContent = y + " سنة" + (m > 0 ? " و " + m + " شهر" : "");
+  }
+  animateResult("c-results");
+
+  /* حفظ في الحالة — profit = صافي الدخل السنوي */
+  state.real = { roi, profit: netIncome };
+  showComparisonSection("real");
+}
+
+/* ================================================================
+   حاسبة بيع العقار — تحديث state.real ثم مقارنة
+   ================================================================ */
+function calcRealEstate() {
+  const buy    = parseFloat(document.getElementById("re-buy").value)    || 0;
+  const extras = parseFloat(document.getElementById("re-extras").value) || 0;
+  const sell   = parseFloat(document.getElementById("re-sell").value)   || 0;
+  const errEl  = document.getElementById("re-error");
+  if (!buy || !sell) { errEl.classList.add("show"); return; }
+  errEl.classList.remove("show");
+
+  const totalCost = buy + extras;
+  const profit    = sell - totalCost;
+  const roi       = totalCost > 0 ? (profit / totalCost) * 100 : 0;
+  const isPos     = profit >= 0;
+  const fmt = n => n.toLocaleString("ar-EG", { minimumFractionDigits:2, maximumFractionDigits:2 });
+
+  document.getElementById("re-total-cost").textContent = fmt(totalCost) + " ج.م";
+  document.getElementById("re-total-sell").textContent = fmt(sell)      + " ج.م";
+  document.getElementById("re-profit").textContent = (isPos ? "▲ +" : "▼ ") + fmt(Math.abs(profit)) + " ج.م";
+  document.getElementById("re-profit").className = "value " + (isPos ? "profit" : "loss");
+  document.getElementById("re-roi").textContent = (isPos ? "+" : "") + roi.toFixed(2) + " %";
+  document.getElementById("re-roi").style.color = isPos ? "#4ade80" : "#f87171";
+  animateResult("re-results");
+
+  /* حفظ في الحالة */
+  state.real = { roi, profit };
+  showComparisonSection("real");
+}
+
+/* ================================================================
+   عرض / تحديث قسم المقارنة التلقائي
+   ================================================================ */
+function showComparisonSection(from) {
+  /* from = "gold" | "real" */
+  const sectionId = from === "gold" ? "gold-comparison" : "real-comparison";
+  const section   = document.getElementById(sectionId);
+
+  /* إظهار القسم */
+  section.classList.add("visible");
+
+  const bothReady = state.gold.roi !== null && state.real.roi !== null;
+
+  if (from === "gold") {
+    document.getElementById("gold-cmp-notice").style.display  = bothReady ? "none"  : "flex";
+    document.getElementById("gold-cmp-charts").style.display  = bothReady ? "block" : "none";
+    if (bothReady) renderCharts("gc", state.gold, state.real);
+  } else {
+    document.getElementById("real-cmp-notice").style.display  = bothReady ? "none"  : "flex";
+    document.getElementById("real-cmp-charts").style.display  = bothReady ? "block" : "none";
+    if (bothReady) renderCharts("rc", state.gold, state.real);
+  }
+
+  /* إذا كان التبويب الآخر محسوباً بالفعل — حدِّث قسمه أيضاً */
+  if (bothReady) {
+    const other = from === "gold" ? "real" : "gold";
+    const otherSection = document.getElementById(other + "-comparison");
+    if (otherSection.classList.contains("visible")) {
+      document.getElementById(other + "-cmp-notice").style.display = "none";
+      document.getElementById(other + "-cmp-charts").style.display = "block";
+      renderCharts(other === "gold" ? "gc" : "rc", state.gold, state.real);
+    }
+  }
+
+  /* تمرير للأسفل */
+  setTimeout(() => section.scrollIntoView({ behavior:"smooth", block:"nearest" }), 200);
+}
+
+/* ================================================================
+   رسم التشارتَين
+   ================================================================ */
+function renderCharts(prefix, gold, real) {
+  const GOLD_CLR = "#c8a96e", GOLD_BG = "rgba(200,169,110,.22)";
+  const REAL_CLR = "#1a3c5e", REAL_BG = "rgba(26,60,94,.18)";
+
+  /* تدمير القديم */
+  if (prefix === "gc") { if (gcBar) gcBar.destroy(); if (gcProfit) gcProfit.destroy(); }
+  else                 { if (rcBar) rcBar.destroy(); if (rcProfit) rcProfit.destroy(); }
+
+  const barCtx    = document.getElementById(prefix + "-chart-bar").getContext("2d");
+  const profitCtx = document.getElementById(prefix + "-chart-profit").getContext("2d");
+
+  const barOpts = {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: c => " " + c.parsed.y.toFixed(2) + "%" } } },
+    scales:{
+      y:{ beginAtZero:true, ticks:{ callback: v => v.toFixed(1)+"%", font:{family:"Arial",size:11} }, grid:{ color:"rgba(0,0,0,.06)" } },
+      x:{ ticks:{ font:{family:"Arial",size:11} }, grid:{ display:false } }
+    }
+  };
+  const profitOpts = {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: c => " " + Number(c.parsed.y).toLocaleString("ar-EG") + " ج.م" } } },
+    scales:{
+      y:{ ticks:{ callback: v => Number(v).toLocaleString("ar-EG"), font:{family:"Arial",size:10}, maxTicksLimit:6 }, grid:{ color:"rgba(0,0,0,.06)" } },
+      x:{ ticks:{ font:{family:"Arial",size:11} }, grid:{ display:false } }
+    }
+  };
+
+  const barChart = new Chart(barCtx, {
+    type:"bar",
+    data:{ labels:["الذهب 🥇","العقار 🏢"],
+           datasets:[{ data:[+gold.roi.toFixed(2), +real.roi.toFixed(2)],
+             backgroundColor:[GOLD_BG,REAL_BG], borderColor:[GOLD_CLR,REAL_CLR],
+             borderWidth:2, borderRadius:10 }] },
+    options: barOpts
+  });
+
+  const profitChart = new Chart(profitCtx, {
+    type:"bar",
+    data:{ labels:["الذهب 🥇","العقار 🏢"],
+           datasets:[{ data:[+gold.profit.toFixed(0), +real.profit.toFixed(0)],
+             backgroundColor:[GOLD_BG,REAL_BG], borderColor:[GOLD_CLR,REAL_CLR],
+             borderWidth:2, borderRadius:10 }] },
+    options: profitOpts
+  });
+
+  if (prefix === "gc") { gcBar = barChart; gcProfit = profitChart; }
+  else                 { rcBar = barChart; rcProfit = profitChart; }
+
+  /* شارات */
+  const gSign = gold.roi >= 0 ? "+" : "";
+  const rSign = real.roi >= 0 ? "+" : "";
+  document.getElementById(prefix + "-badge-gold").textContent = gSign + gold.roi.toFixed(2) + "%";
+  document.getElementById(prefix + "-badge-real").textContent = rSign + real.roi.toFixed(2) + "%";
+  const winner = gold.roi > real.roi ? "الذهب 🥇" : "العقار 🏢";
+  const diff   = Math.abs(gold.roi - real.roi).toFixed(2);
+  document.getElementById(prefix + "-winner-text").textContent = "🏆 " + winner + " أفضل بفارق " + diff + "%";
+}
+
+/* ================================================================
+   مشاركة النتائج
+   ================================================================ */
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2800);
+}
+
+function copyText(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast("✅ تم نسخ الرسالة!"));
+  } else {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta);
+    ta.select(); document.execCommand("copy");
+    document.body.removeChild(ta);
+    showToast("✅ تم نسخ الرسالة!");
+  }
+}
+
+function shareGoldROI() {
+  const buy  = document.getElementById("gr-buy").value;
+  const sell = document.getElementById("gr-sell").value;
+  const grms = document.getElementById("gr-grams").value;
+  const cost = document.getElementById("gr-total-cost").textContent;
+  const sv   = document.getElementById("gr-total-sell").textContent;
+  const prof = document.getElementById("gr-profit").textContent;
+  const roi  = document.getElementById("gr-roi").textContent;
+  const comp = document.getElementById("company-name-display").textContent;
+  if (!buy || !sell || !grms) { showToast("⚠️ احسب النتائج أولاً"); return; }
+
+  const msg =
+`🏦 ${comp}
+📊 تقرير العائد على استثمار الذهب
+${"─".repeat(30)}
+🥇 عيار: ${document.getElementById("g-karat").options[document.getElementById("g-karat").selectedIndex].text.split("—")[0].trim()}
+💵 سعر الشراء / جم:  ${Number(buy).toLocaleString("ar-EG")} ج.م
+🎯 سعر البيع / جم:   ${Number(sell).toLocaleString("ar-EG")} ج.م
+⚖️ الكمية:            ${Number(grms).toLocaleString("ar-EG")} جم
+${"─".repeat(30)}
+💰 إجمالي التكلفة:   ${cost}
+💎 إجمالي قيمة البيع: ${sv}
+📈 الربح / الخسارة:  ${prof}
+🏆 معدل العائد ROI:  ${roi}
+${"─".repeat(30)}
+📞 للتواصل: 01028265854`;
+
+  copyText(msg);
+}
+
+function shareRealEstate() {
+  const buy    = document.getElementById("re-buy").value;
+  const extras = document.getElementById("re-extras").value || "0";
+  const sell   = document.getElementById("re-sell").value;
+  const cost   = document.getElementById("re-total-cost").textContent;
+  const sv     = document.getElementById("re-total-sell").textContent;
+  const prof   = document.getElementById("re-profit").textContent;
+  const roi    = document.getElementById("re-roi").textContent;
+  const comp   = document.getElementById("company-name-display").textContent;
+  if (!buy || !sell) { showToast("⚠️ احسب النتائج أولاً"); return; }
+
+  const msg =
+`🏦 ${comp}
+📊 تقرير العائد على الاستثمار العقاري
+${"─".repeat(30)}
+🏠 سعر الشراء:        ${Number(buy).toLocaleString("ar-EG")} ج.م
+🔧 مصاريف إضافية:    ${Number(extras).toLocaleString("ar-EG")} ج.م
+💰 إجمالي التكلفة:   ${cost}
+🎯 سعر البيع المتوقع: ${sv}
+${"─".repeat(30)}
+📈 الربح المتوقع:    ${prof}
+🏆 معدل العائد ROI:  ${roi}
+${"─".repeat(30)}
+📞 للتواصل: 01028265854`;
+
+  copyText(msg);
+}
+
+/* ================================================================
+   مساعد
+   ================================================================ */
+function animateResult(id) {
+  const box = document.getElementById(id);
+  box.classList.remove("visible");
+  void box.offsetWidth;
+  box.classList.add("visible");
+}
+</script>
+</body>
+</html>
